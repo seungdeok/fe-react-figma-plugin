@@ -1,45 +1,84 @@
-import React from 'react';
-import logo from '../assets/logo.svg';
+import React, { Children, useState } from 'react';
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import format from 'html-format';
+import { materialDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import '../styles/ui.css';
 
+enum Renders {
+  HTML = 'HTML',
+  JSX = 'JSX',
+  OPTIMIZATION = 'Optimization',
+}
+
+type RenderType = Renders[keyof Renders];
+
 function App() {
-  const textbox = React.useRef<HTMLInputElement>(undefined);
-
-  const countRef = React.useCallback((element: HTMLInputElement) => {
-    if (element) element.value = '5';
-    textbox.current = element;
-  }, []);
-
-  const onCreate = () => {
-    const count = parseInt(textbox.current.value, 10);
-    parent.postMessage({ pluginMessage: { type: 'create-rectangles', count } }, '*');
+  const [renderType, setRenderType] = useState<RenderType>(Renders.HTML);
+  const [htmlStr, setHtmlStr] = useState('');
+  const onShow = (type: RenderType) => () => {
+    setRenderType(type);
+    parent.postMessage({ pluginMessage: { type: 'show-selection-frame' } }, '*');
   };
 
-  const onCancel = () => {
-    parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*');
+  const onCopy = () => {
+    if (!htmlStr) return;
+    const textarea = document.createElement('textarea');
+    textarea.value = htmlStr;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'absolute';
+    textarea.style.left = '-9999px';
+
+    document.body.appendChild(textarea);
+
+    const range = document.createRange();
+    const selection = window.getSelection();
+
+    range.selectNode(textarea);
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    textarea.select();
+    document.execCommand('copy');
+
+    document.body.removeChild(textarea);
+    selection.removeAllRanges();
   };
 
   React.useEffect(() => {
-    // This is how we read messages sent from the plugin controller
+    parent.postMessage({ pluginMessage: { type: 'show-selection-frame' } }, '*');
     window.onmessage = (event) => {
       const { type, message } = event.data.pluginMessage;
-      if (type === 'create-rectangles') {
-        console.log(`Figma Says: ${message}`);
+      if (type === 'show-selection-frame') {
+        setHtmlStr(message);
       }
     };
   }, []);
 
   return (
     <div>
-      <img src={logo} />
-      <h2>Rectangle Creator</h2>
-      <p>
-        Count: <input ref={countRef} />
-      </p>
-      <button id="create" onClick={onCreate}>
-        Create
-      </button>
-      <button onClick={onCancel}>Cancel</button>
+      <h2>Select Frame</h2>
+      <div>
+        {Children.map([Renders.HTML, Renders.JSX, Renders.OPTIMIZATION], (label) => (
+          <button
+            type="button"
+            className={`${renderType === label ? 'active' : ''}`}
+            onClick={onShow(label)}
+            disabled={label !== Renders.HTML}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className="left-wrap">
+        <button type="button" onClick={onCopy}>
+          Copy
+        </button>
+      </div>
+      <div>
+        <SyntaxHighlighter language="html" style={materialDark}>
+          {format(htmlStr)}
+        </SyntaxHighlighter>
+      </div>
     </div>
   );
 }
