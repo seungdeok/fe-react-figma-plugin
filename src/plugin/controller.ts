@@ -1,140 +1,147 @@
+export interface FigmaPluginProps {
+  type: string;
+  isJSX: boolean;
+}
+
 figma.showUI(__html__, { width: 480, height: 600 });
 
-function generateStyle(layer: SceneNode) {
-  let cssStyle = 'style="';
+function generateStyle(layer: SceneNode, isJSX: boolean) {
+  let cssText = `style=${isJSX ? '{{' : '"'}`;
   for (const key in layer) {
     const value = layer[key];
 
     switch (key) {
       case 'width':
-        cssStyle += `width: ${value}px;`;
+        cssText += `width: ${value}px;`;
         break;
 
       case 'height':
-        cssStyle += `height: ${value}px;`;
+        cssText += `height: ${value}px;`;
         break;
 
       case 'fills':
         if (value && value.length > 0) {
           const fill = value[0].color;
           if (fill) {
-            cssStyle += `background-color: rgba(${fill.r * 255}, ${fill.g * 255}, ${fill.b * 255}, ${
-              value[0].opacity
-            });\n`;
+            cssText += `background-color: rgba(${Math.floor(fill.r * 255)}, ${Math.floor(fill.g * 255)}, ${Math.floor(
+              fill.b * 255
+            )}, ${value[0].opacity});\n`;
           }
         }
         break;
       case 'fontSize':
-        cssStyle += `font-size: ${value}px;`;
+        cssText += `font-size: ${value}px;`;
         break;
 
       case 'position':
-        cssStyle += `position: ${value};`;
+        cssText += `position: ${value};`;
         break;
 
       case 'left':
-        cssStyle += `left: ${value}px;`;
+        cssText += `left: ${value}px;`;
         break;
 
       case 'right':
-        cssStyle += `right: ${value}px;`;
+        cssText += `right: ${value}px;`;
         break;
 
       case 'top':
-        cssStyle += `top: ${value}px;`;
+        cssText += `top: ${value}px;`;
         break;
 
       case 'bottom':
-        cssStyle += `bottom: ${value}px;`;
+        cssText += `bottom: ${value}px;`;
         break;
 
       case 'borderRadius':
-        cssStyle += `border-radius: ${value}px;`;
+        cssText += `border-radius: ${value}px;`;
         break;
 
       case 'textAlign':
-        cssStyle += `text-align: ${value};`;
+        cssText += `text-align: ${value};`;
         break;
 
       case 'color':
-        cssStyle += `color: rgba(${value.r * 255}, ${value.g * 255}, ${value.b * 255}, 1);`;
+        cssText += `color: rgba(${Math.floor(value.r * 255)}, ${Math.floor(value.g * 255)}, ${Math.floor(
+          value.b * 255
+        )}, 1);`;
         break;
 
       case 'opacity':
-        cssStyle += `opacity: ${value};`;
+        cssText += `opacity: ${value};`;
         break;
 
       case 'wordWrap':
-        cssStyle += `word-wrap: ${value ? 'break-word' : 'normal'};`;
+        cssText += `word-wrap: ${value ? 'break-word' : 'normal'};`;
         break;
 
       case 'fontName':
-        cssStyle += `font-family: ${value.family};`;
+        cssText += `font-family: ${value.family};`;
         break;
 
       case 'fontWeight':
-        cssStyle += `font-weight: ${value};`;
+        cssText += `font-weight: ${value};`;
         break;
 
       case 'borderTop':
-        cssStyle += `border-top: ${value}px solid;`;
+        cssText += `border-top: ${value}px solid;`;
         break;
 
       case 'borderBottom':
-        cssStyle += `border-bottom: ${value}px solid;`;
+        cssText += `border-bottom: ${value}px solid;`;
         break;
 
       case 'borderLeft':
-        cssStyle += `border-left: ${value}px solid;`;
+        cssText += `border-left: ${value}px solid;`;
         break;
 
       case 'borderRight':
-        cssStyle += `border-right: ${value}px solid;`;
+        cssText += `border-right: ${value}px solid;`;
         break;
 
       case 'display':
-        cssStyle += `display: ${value};`;
+        cssText += `display: ${value};`;
         break;
 
       case 'justifyContent':
-        cssStyle += `justify-content: ${value};`;
+        cssText += `justify-content: ${value};`;
         break;
 
       case 'alignItems':
-        cssStyle += `align-items: ${value};`;
+        cssText += `align-items: ${value};`;
         break;
 
       case 'gap':
-        cssStyle += `gap: ${value}px;`;
+        cssText += `gap: ${value}px;`;
         break;
 
       case 'paddingTop':
-        cssStyle += `padding-top: ${value}px;`;
+        cssText += `padding-top: ${value}px;`;
         break;
 
       case 'paddingBottom':
-        cssStyle += `padding-bottom: ${value}px;`;
+        cssText += `padding-bottom: ${value}px;`;
         break;
 
       case 'paddingLeft':
-        cssStyle += `padding-left: ${value}px;`;
+        cssText += `padding-left: ${value}px;`;
         break;
 
       case 'paddingRight':
-        cssStyle += `padding-right: ${value}px;`;
+        cssText += `padding-right: ${value}px;`;
         break;
 
       case 'flexDirection':
-        cssStyle += `flex-direction: ${value};`;
+        cssText += `flex-direction: ${value};`;
         break;
 
       case 'lineHeight':
         if (typeof value === 'object') {
           if (value.unit === 'PIXELS') {
-            cssStyle += `line-height: ${value.value}px;`;
+            cssText += `line-height: ${value.value}px;`;
           }
         } else if (typeof value === 'number') {
-          cssStyle += `line-height: ${value}px;`;
+          cssText += `line-height: ${value}px;`;
         }
         break;
 
@@ -143,38 +150,38 @@ function generateStyle(layer: SceneNode) {
     }
   }
 
-  cssStyle += '"';
-  return cssStyle;
+  cssText += isJSX ? '}}' : '"';
+  return cssText;
 }
 
-function generateHtml(layer: SceneNode) {
+function generateHtml(layer: SceneNode, isJSX: boolean) {
   let html = '';
 
-  html += `<div class="${layer.type.toLowerCase()}"`;
+  html += `<div class${isJSX ? 'Name' : ''}="${layer.type.toLowerCase()}"`;
 
   switch (layer.type) {
     case 'FRAME':
-      html += `${generateStyle(layer)}>`;
+      html += `${generateStyle(layer, isJSX)}>`;
       layer.children.forEach((child) => {
-        const childResult = generateHtml(child);
+        const childResult = generateHtml(child, isJSX);
         html += childResult.html;
       });
       break;
     case 'TEXT':
-      html += `${generateStyle(layer)}>`;
+      html += `${generateStyle(layer, isJSX)}>`;
       html += layer.characters;
       break;
     case 'INSTANCE':
-      html += `${generateStyle(layer)}>`;
+      html += `${generateStyle(layer, isJSX)}>`;
       break;
     case 'RECTANGLE':
-      html += `${generateStyle(layer)}>`;
+      html += `${generateStyle(layer, isJSX)}>`;
       break;
     case 'VECTOR':
-      html += `${generateStyle(layer)}>`;
+      html += `${generateStyle(layer, isJSX)}>`;
       break;
     case 'GROUP':
-      html += `${generateStyle(layer)}>`;
+      html += `${generateStyle(layer, isJSX)}>`;
       break;
     default:
       break;
@@ -185,12 +192,12 @@ function generateHtml(layer: SceneNode) {
   return { html };
 }
 
-figma.ui.onmessage = (msg) => {
+figma.ui.onmessage = (msg: FigmaPluginProps) => {
   if (msg.type === 'show-selection-frame') {
     const nodes = figma.currentPage.selection;
     const htmlText = [];
     nodes.forEach((selectedLayer) => {
-      const { html } = generateHtml(selectedLayer);
+      const { html } = generateHtml(selectedLayer, msg.isJSX);
       htmlText.push(html);
     });
 
@@ -199,7 +206,7 @@ figma.ui.onmessage = (msg) => {
       type: 'show-selection-frame',
       message: `${htmlText.join('\n')}`,
     });
+  } else if (msg.type === 'close') {
+    figma.closePlugin();
   }
-
-  // figma.closePlugin();
 };

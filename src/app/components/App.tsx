@@ -17,7 +17,7 @@ function App() {
   const [htmlStr, setHtmlStr] = useState('');
   const onShow = (type: RenderType) => () => {
     setRenderType(type);
-    parent.postMessage({ pluginMessage: { type: 'show-selection-frame' } }, '*');
+    parent.postMessage({ pluginMessage: { type: 'show-selection-frame', isJSX: type === Renders.JSX } }, '*');
   };
 
   const onCopy = () => {
@@ -45,7 +45,7 @@ function App() {
   };
 
   React.useEffect(() => {
-    parent.postMessage({ pluginMessage: { type: 'show-selection-frame' } }, '*');
+    parent.postMessage({ pluginMessage: { type: 'show-selection-frame', isJSX: false } }, '*');
     window.onmessage = (event) => {
       const { type, message } = event.data.pluginMessage;
       if (type === 'show-selection-frame') {
@@ -63,7 +63,7 @@ function App() {
             type="button"
             className={`${renderType === label ? 'active' : ''}`}
             onClick={onShow(label)}
-            disabled={label !== Renders.HTML}
+            disabled={label === Renders.OPTIMIZATION}
           >
             {label}
           </button>
