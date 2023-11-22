@@ -1,145 +1,26 @@
-function generateStyle(layer: SceneNode, isJSX: boolean) {
+function formatJSX(key: string) {
+  return key.replace('-', '_');
+}
+
+async function generateStyle(layer: SceneNode, isJSX: boolean, isOuter: boolean) {
   let cssText = `style=${isJSX ? '{{' : '"'}`;
-  for (const key in layer) {
-    const value = layer[key];
+  if (isOuter) {
+    cssText += `position: relative;`;
+  } else {
+    cssText += `position: absolute;left: ${layer['x']}px;top: ${layer['y']}px;`;
+  }
 
-    switch (key) {
-      case 'width':
-        cssText += `width: ${value}px;`;
-        break;
+  const styles = await layer.getCSSAsync();
 
-      case 'height':
-        cssText += `height: ${value}px;`;
-        break;
+  for (const key in styles) {
+    const value = styles[key];
 
-      case 'fills':
-        if (value && value.length > 0) {
-          const fill = value[0].color;
-          if (fill) {
-            cssText += `background-color: rgba(${Math.floor(fill.r * 255)}, ${Math.floor(fill.g * 255)}, ${Math.floor(
-              fill.b * 255
-            )}, ${value[0].opacity});\n`;
-          }
-        }
-        break;
-      case 'fontSize':
-        cssText += `font-size: ${value}px;`;
-        break;
-
-      case 'position':
-        cssText += `position: ${value};`;
-        break;
-
-      case 'left':
-        cssText += `left: ${value}px;`;
-        break;
-
-      case 'right':
-        cssText += `right: ${value}px;`;
-        break;
-
-      case 'top':
-        cssText += `top: ${value}px;`;
-        break;
-
-      case 'bottom':
-        cssText += `bottom: ${value}px;`;
-        break;
-
-      case 'borderRadius':
-        cssText += `border-radius: ${value}px;`;
-        break;
-
-      case 'textAlign':
-        cssText += `text-align: ${value};`;
-        break;
-
-      case 'color':
-        cssText += `color: rgba(${Math.floor(value.r * 255)}, ${Math.floor(value.g * 255)}, ${Math.floor(
-          value.b * 255
-        )}, 1);`;
-        break;
-
-      case 'opacity':
-        cssText += `opacity: ${value};`;
-        break;
-
-      case 'wordWrap':
-        cssText += `word-wrap: ${value ? 'break-word' : 'normal'};`;
-        break;
-
-      case 'fontName':
-        cssText += `font-family: ${value.family};`;
-        break;
-
-      case 'fontWeight':
-        cssText += `font-weight: ${value};`;
-        break;
-
-      case 'borderTop':
-        cssText += `border-top: ${value}px solid;`;
-        break;
-
-      case 'borderBottom':
-        cssText += `border-bottom: ${value}px solid;`;
-        break;
-
-      case 'borderLeft':
-        cssText += `border-left: ${value}px solid;`;
-        break;
-
-      case 'borderRight':
-        cssText += `border-right: ${value}px solid;`;
-        break;
-
-      case 'display':
-        cssText += `display: ${value};`;
-        break;
-
-      case 'justifyContent':
-        cssText += `justify-content: ${value};`;
-        break;
-
-      case 'alignItems':
-        cssText += `align-items: ${value};`;
-        break;
-
-      case 'gap':
-        cssText += `gap: ${value}px;`;
-        break;
-
-      case 'paddingTop':
-        cssText += `padding-top: ${value}px;`;
-        break;
-
-      case 'paddingBottom':
-        cssText += `padding-bottom: ${value}px;`;
-        break;
-
-      case 'paddingLeft':
-        cssText += `padding-left: ${value}px;`;
-        break;
-
-      case 'paddingRight':
-        cssText += `padding-right: ${value}px;`;
-        break;
-
-      case 'flexDirection':
-        cssText += `flex-direction: ${value};`;
-        break;
-
-      case 'lineHeight':
-        if (typeof value === 'object') {
-          if (value.unit === 'PIXELS') {
-            cssText += `line-height: ${value.value}px;`;
-          }
-        } else if (typeof value === 'number') {
-          cssText += `line-height: ${value}px;`;
-        }
-        break;
-
-      default:
-        break;
+    if (key === 'width') {
+      cssText += `width: ${layer['layoutSizingHorizontal'] === 'FIXED' ? `${layer['width']}px` : '100%'};`;
+    } else if (key === 'height') {
+      cssText += `height: ${layer['layoutSizingVertical'] === 'FIXED' ? `${layer['height']}px` : '100%'};`;
+    } else {
+      cssText += `${isJSX ? formatJSX(key) : key}: ${value};`;
     }
   }
 
@@ -147,34 +28,48 @@ function generateStyle(layer: SceneNode, isJSX: boolean) {
   return cssText;
 }
 
-function generateHtml(layer: SceneNode, isJSX: boolean) {
+async function generateHtml(layer: SceneNode, isJSX: boolean, isOuter: boolean) {
   let html = '';
 
   html += `<div class${isJSX ? 'Name' : ''}="${layer.type.toLowerCase()}"`;
 
+  const cssText = await generateStyle(layer, isJSX, isOuter);
+
   switch (layer.type) {
     case 'FRAME':
-      html += `${generateStyle(layer, isJSX)}>`;
-      layer.children.forEach((child) => {
-        const childResult = generateHtml(child, isJSX);
-        html += childResult.html;
-      });
+      html += `${cssText}>`;
+      await Promise.all(
+        layer.children.map(async (child) => {
+          const childResult = await generateHtml(child, isJSX, isOuter);
+          html += childResult.html;
+
+          return;
+        })
+      );
       break;
     case 'TEXT':
-      html += `${generateStyle(layer, isJSX)}>`;
+      html += `${cssText}>`;
       html += layer.characters;
       break;
     case 'INSTANCE':
-      html += `${generateStyle(layer, isJSX)}>`;
+      html += `${cssText}>`;
       break;
     case 'RECTANGLE':
-      html += `${generateStyle(layer, isJSX)}>`;
+      html += `${cssText}>`;
       break;
     case 'VECTOR':
-      html += `${generateStyle(layer, isJSX)}>`;
+      html += `${cssText}>`;
       break;
     case 'GROUP':
-      html += `${generateStyle(layer, isJSX)}>`;
+      html += `${cssText}>`;
+      await Promise.all(
+        layer.children.map(async (child) => {
+          const childResult = await generateHtml(child, isJSX, isOuter);
+          html += childResult.html;
+
+          return;
+        })
+      );
       break;
     default:
       break;

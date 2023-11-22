@@ -7,14 +7,16 @@ export interface FigmaPluginProps {
 
 figma.showUI(__html__, { width: 480, height: 600 });
 
-figma.ui.onmessage = (msg: FigmaPluginProps) => {
+figma.ui.onmessage = async (msg: FigmaPluginProps) => {
   if (msg.type === 'show-selection-frame') {
     const nodes = figma.currentPage.selection;
-    const htmlText = [];
-    nodes.forEach((selectedLayer) => {
-      const { html } = figmaHandler.generateHtml(selectedLayer, msg.isJSX);
-      htmlText.push(html);
-    });
+
+    const htmlText = await Promise.all(
+      nodes.map(async (selectedLayer, index) => {
+        const { html } = await figmaHandler.generateHtml(selectedLayer, msg.isJSX, index === 0);
+        return html;
+      })
+    );
 
     figma.viewport.scrollAndZoomIntoView(nodes);
     figma.ui.postMessage({
