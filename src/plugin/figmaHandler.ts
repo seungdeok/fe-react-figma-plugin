@@ -31,13 +31,12 @@ async function generateStyle(layer: SceneNode, isJSX: boolean, isOuter: boolean)
 async function generateHtml(layer: SceneNode, isJSX: boolean, isOuter: boolean) {
   let html = '';
 
-  html += `<div class${isJSX ? 'Name' : ''}="${layer.type.toLowerCase()}"`;
-
   const cssText = await generateStyle(layer, isJSX, isOuter);
+
+  html += `<div style=${isJSX ? '{{' : '"'}${cssText}${isJSX ? '}}' : '"'}>`;
 
   switch (layer.type) {
     case 'FRAME':
-      html += `${cssText}>`;
       await Promise.all(
         layer.children.map(async (child) => {
           const childResult = await generateHtml(child, isJSX, isOuter);
@@ -48,20 +47,15 @@ async function generateHtml(layer: SceneNode, isJSX: boolean, isOuter: boolean) 
       );
       break;
     case 'TEXT':
-      html += `${cssText}>`;
       html += layer.characters;
       break;
     case 'INSTANCE':
-      html += `${cssText}>`;
       break;
     case 'RECTANGLE':
-      html += `${cssText}>`;
       break;
     case 'VECTOR':
-      html += `${cssText}>`;
       break;
     case 'GROUP':
-      html += `${cssText}>`;
       await Promise.all(
         layer.children.map(async (child) => {
           const childResult = await generateHtml(child, isJSX, isOuter);
