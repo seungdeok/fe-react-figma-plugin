@@ -7,7 +7,6 @@ import '../styles/ui.css';
 enum Renders {
   HTML = 'HTML',
   JSX = 'JSX',
-  OPTIMIZATION = 'Optimization',
 }
 
 type RenderType = Renders[keyof Renders];
@@ -58,13 +57,8 @@ function App() {
     <div>
       <h2>Select Frame</h2>
       <div>
-        {Children.map([Renders.HTML, Renders.JSX, Renders.OPTIMIZATION], (label) => (
-          <button
-            type="button"
-            className={`${renderType === label ? 'active' : ''}`}
-            onClick={onShow(label)}
-            disabled={label === Renders.OPTIMIZATION}
-          >
+        {Children.map([Renders.HTML, Renders.JSX], (label) => (
+          <button type="button" className={`${renderType === label ? 'active' : ''}`} onClick={onShow(label)}>
             {label}
           </button>
         ))}
