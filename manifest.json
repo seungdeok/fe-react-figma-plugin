@@ -1,6 +1,6 @@
 {
-  "name": "Figma To FECode",
-  "id": "00000000",
+  "name": "Figma to HTML/JSX Plugin",
+  "id": "6ba7b8109dad11d180b400c04fd430c8",
   "api": "1.0.0",
   "main": "dist/code.js",
   "ui": "dist/ui.html",
