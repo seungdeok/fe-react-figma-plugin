@@ -2,8 +2,12 @@ function formatJSX(key: string) {
   return key.replace('-', '_');
 }
 
+const generateClassname = (isJSX: boolean, layerName: string) => {
+  return `${isJSX ? 'className' : 'class'}="${layerName.replace(/ /g, '')}`;
+};
+
 async function generateStyle(layer: SceneNode, isJSX: boolean, isOuter: boolean) {
-  let cssText = `style=${isJSX ? '{{' : '"'}`;
+  let cssText = '';
   if (isOuter) {
     cssText += `position: relative;`;
   } else {
@@ -24,20 +28,25 @@ async function generateStyle(layer: SceneNode, isJSX: boolean, isOuter: boolean)
     }
   }
 
-  cssText += isJSX ? '}}' : '"';
   return cssText;
 }
 
 async function generateHtml(layer: SceneNode, isJSX: boolean, isOuter: boolean) {
   let html = '';
 
-  html += `<div class${isJSX ? 'Name' : ''}="${layer.type.toLowerCase()}"`;
-
+  const className = generateClassname(isJSX, layer.name);
   const cssText = await generateStyle(layer, isJSX, isOuter);
 
+  html += `<div ${className} style=${isJSX ? '{{' : '"'}${cssText}${isJSX ? '}}' : '"'}>`;
+
   switch (layer.type) {
+    case 'INSTANCE':
+      break;
+    case 'RECTANGLE':
+      break;
+    case 'BOOLEAN_OPERATION':
+      break;
     case 'FRAME':
-      html += `${cssText}>`;
       await Promise.all(
         layer.children.map(async (child) => {
           const childResult = await generateHtml(child, isJSX, isOuter);
@@ -48,20 +57,14 @@ async function generateHtml(layer: SceneNode, isJSX: boolean, isOuter: boolean) 
       );
       break;
     case 'TEXT':
-      html += `${cssText}>`;
       html += layer.characters;
       break;
-    case 'INSTANCE':
-      html += `${cssText}>`;
-      break;
-    case 'RECTANGLE':
-      html += `${cssText}>`;
-      break;
     case 'VECTOR':
-      html += `${cssText}>`;
+      html += `<svg width="${layer.width}" height="${layer.height}" xmlns="http://www.w3.org/2000/svg"><path d="${
+        layer.fillGeometry.length ? layer.fillGeometry[0].data : ''
+      }" /></svg>`;
       break;
     case 'GROUP':
-      html += `${cssText}>`;
       await Promise.all(
         layer.children.map(async (child) => {
           const childResult = await generateHtml(child, isJSX, isOuter);
